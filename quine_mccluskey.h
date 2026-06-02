@@ -12,4 +12,6 @@ struct Implicant{
     bool can_merge(const Implicant&other) const;
     Implicant merge(const Implicant& other) const;
     std::string to_string(int num_vars) const;
+    bool operator<(const Implicant &other) const;
 };
+std::vector<Implicant>get_prime_implicants(const std::vector<int>& minterms, int num_vars);
