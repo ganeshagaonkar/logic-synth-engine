@@ -15,3 +15,4 @@ struct Implicant{
     bool operator<(const Implicant &other) const;
 };
 std::vector<Implicant>get_prime_implicants(const std::vector<int>& minterms, int num_vars);
+std::vector<Implicant>get_minimum_cover(std::vector<Implicant>primes,const std::vector<int>&original_minterms);

@@ -1,5 +1,6 @@
 #include "quine_mccluskey.h"
 #include<set>
+#include<algorithm>
 Implicant::Implicant():value(0),mask(0),is_prime(true){}
 Implicant::Implicant(int m):value(m),mask(0),is_prime(true){minterms.push_back(m);}
 int Implicant::num_ones()const{
@@ -88,4 +89,70 @@ std::vector<Implicant> get_prime_implicants(const std::vector<int>& minterms, in
     }
 
     return prime_implicants;
+}
+std::vector<Implicant> get_minimum_cover(std::vector<Implicant> primes, const std::vector<int>& original_minterms) {
+    std::vector<Implicant> minimum_cover;
+    std::set<int> uncovered_minterms(original_minterms.begin(), original_minterms.end());
+    std::set<int> used_prime_indices;
+
+    // Phase 1: Find Essential Prime Implicants
+    for (int minterm : uncovered_minterms) {
+        int cover_count = 0;
+        int last_covering_index = -1;
+
+        for (int i = 0; i < primes.size(); ++i) {
+            // Check if this prime covers the current minterm
+            if (std::find(primes[i].minterms.begin(), primes[i].minterms.end(), minterm) != primes[i].minterms.end()) {
+                cover_count++;
+                last_covering_index = i;
+            }
+        }
+
+        // If exactly one prime covers this minterm, it is essential
+        if (cover_count == 1 && used_prime_indices.find(last_covering_index) == used_prime_indices.end()) {
+            minimum_cover.push_back(primes[last_covering_index]);
+            used_prime_indices.insert(last_covering_index);
+        }
+    }
+
+    // Remove all minterms covered by the essential primes
+    for (const Implicant& epi : minimum_cover) {
+        for (int m : epi.minterms) {
+            uncovered_minterms.erase(m);
+        }
+    }
+
+    // Phase 2: Greedy Set-Cover for remaining minterms
+    while (!uncovered_minterms.empty()) {
+        int best_index = -1;
+        int max_covered = 0;
+
+        for (int i = 0; i < primes.size(); ++i) {
+            if (used_prime_indices.find(i) != used_prime_indices.end()) continue;
+
+            int current_covered = 0;
+            for (int m : primes[i].minterms) {
+                if (uncovered_minterms.find(m) != uncovered_minterms.end()) {
+                    current_covered++;
+                }
+            }
+
+            if (current_covered > max_covered) {
+                max_covered = current_covered;
+                best_index = i;
+            }
+        }
+
+        // Safety break to prevent infinite loops on malformed data
+        if (best_index == -1) break; 
+
+        minimum_cover.push_back(primes[best_index]);
+        used_prime_indices.insert(best_index);
+
+        for (int m : primes[best_index].minterms) {
+            uncovered_minterms.erase(m);
+        }
+    }
+
+    return minimum_cover;
 }
