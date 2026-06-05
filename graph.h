@@ -8,7 +8,8 @@ enum class GateType{
     OUTPUT,
     AND,
     OR,
-    NOT
+    NOT,
+    DFF
 };
 struct Node{
     int id;
@@ -26,6 +27,7 @@ class CircuitGraph{
     std::vector<int>input_nodes;
     std::vector<int>output_nodes;
     public:
+    void tick_clock();
     void add_node(int id,GateType type,int delay);
     void add_edge(int source_id,int dest_id);
     void set_inputs(const std::vector<bool>&input_values);

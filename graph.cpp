@@ -30,9 +30,15 @@ void CircuitGraph::evaluate_topological()
 {std::queue<int>q;
 std::unordered_map<int,int>dep;
 for(auto x:nodes)
-{if((x.second).inputs.size()==0)
-    q.push(x.first);
-dep[x.first]+=(x.second).inputs.size();
+{int id=x.first;
+    GateType type=x.second.type;
+    if(type==GateType::INPUT || type==GateType::DFF)
+{dep[id]=0;
+q.push(id);}
+else{
+    dep[id]=x.second.inputs.size();
+    if(dep[id]==0)q.push(id);
+}
 }
 while(q.size()!=0)
 {int current_id=q.front();
@@ -59,7 +65,8 @@ case GateType::NOT:{
 case GateType::OUTPUT:{
     current_node.current_value=nodes[current_node.inputs[0]].current_value;
     break;
-}}
+}
+case GateType::DFF:break;}
 
 q.pop();
 for(auto x:current_node.outputs)
@@ -72,9 +79,15 @@ int CircuitGraph::get_critical_path()
 std::unordered_map<int,int>dep;
 std::vector<int>topo;
 for(auto x:nodes)
-{if((x.second).inputs.size()==0)
-    q.push(x.first);
-dep[x.first]+=(x.second).inputs.size();
+{int id=x.first;
+    GateType type=x.second.type;
+    if(type==GateType::INPUT||type==GateType::DFF)
+    {dep[id]=0;
+    q.push(id);}
+    else
+    {dep[id]=x.second.inputs.size();
+    if(dep[id]==0)
+    q.push(id);}
 }
 while(q.size()!=0)
 {int node=q.front();
@@ -97,3 +110,15 @@ for(int out:output_nodes)
 ans=std::max(ans,dp[out]);
 return ans;
 }
+
+void CircuitGraph::tick_clock()
+{evaluate_topological();
+std::unordered_map<int,bool>next_dff_states;
+for(auto x:nodes)
+{if(x.second.type==GateType::DFF)
+{if(!x.second.inputs.empty())
+{int in_id=x.second.inputs[0];
+next_dff_states[x.first]=nodes[in_id].current_value;}}}
+
+for(auto x:next_dff_states)
+{nodes[x.first].current_value=x.second;}}
